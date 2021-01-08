@@ -1,0 +1,109 @@
+# The diff should be in the form of text (Not image).
+
+diff -ruN linux/linux-5.9.1/arch/x86/entry/syscalls/syscall_64.tbl linux3/linux-5.9.1/arch/x86/entry/syscalls/syscall_64.tbl
+--- linux/linux-5.9.1/arch/x86/entry/syscalls/syscall_64.tbl	2020-10-16 23:31:22.000000000 -0700
++++ linux3/linux-5.9.1/arch/x86/entry/syscalls/syscall_64.tbl	2020-10-27 13:00:09.125164858 -0700
+@@ -361,6 +361,7 @@
+ 437	common	openat2			sys_openat2
+ 438	common	pidfd_getfd		sys_pidfd_getfd
+ 439	common	faccessat2		sys_faccessat2
++440 common  sh_task_info    sys_sh_task_info
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+Binary files linux/linux-5.9.1/certs/signing_key.x509 and linux3/linux-5.9.1/certs/signing_key.x509 differ
+diff -ruN linux/linux-5.9.1/Makefile linux3/linux-5.9.1/Makefile
+--- linux/linux-5.9.1/Makefile	2020-10-16 23:31:22.000000000 -0700
++++ linux3/linux-5.9.1/Makefile	2020-10-27 12:57:13.449981474 -0700
+@@ -1094,7 +1094,7 @@
+ export MODULES_NSDEPS := $(extmod-prefix)modules.nsdeps
+ 
+ ifeq ($(KBUILD_EXTMOD),)
+-core-y		+= kernel/ certs/ mm/ fs/ ipc/ security/ crypto/ block/
++core-y		+= kernel/ certs/ mm/ fs/ ipc/ security/ crypto/ block/ sh_task_info/
+ 
+ vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, \
+ 		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
+diff -ruN linux/linux-5.9.1/sh_task_info/Makefile linux3/linux-5.9.1/sh_task_info/Makefile
+--- linux/linux-5.9.1/sh_task_info/Makefile	1969-12-31 16:00:00.000000000 -0800
++++ linux3/linux-5.9.1/sh_task_info/Makefile	2020-10-27 12:55:42.402366334 -0700
+@@ -0,0 +1 @@
++obj-y := sh_task_info.o
+\ No newline at end of file
+diff -ruN linux/linux-5.9.1/sh_task_info/sh_task_info.c linux3/linux-5.9.1/sh_task_info/sh_task_info.c
+--- linux/linux-5.9.1/sh_task_info/sh_task_info.c	1969-12-31 16:00:00.000000000 -0800
++++ linux3/linux-5.9.1/sh_task_info/sh_task_info.c	2020-10-28 00:29:48.078487228 -0700
+@@ -0,0 +1,71 @@
++#include <linux/kernel.h>
++#include <linux/syscalls.h>
++#include <linux/printk.h>
++#include <linux/module.h>
++#include <asm/uaccess.h>
++#include <linux/fs.h> 
++#include <linux/cdev.h>
++#include <linux/proc_fs.h>
++#include <linux/pid.h>
++#include <linux/pid_namespace.h>
++#include <linux/sched.h>
++#include <linux/string.h>
++#include <linux/errno.h>
++#include <linux/uaccess.h>
++
++
++SYSCALL_DEFINE3(sh_task_info,int,pid,char *,file_path,int,path_length){
++	//int p_id;
++	struct pid *pid_struct = NULL;
++	struct task_struct *task;
++	int proc_id;
++	long int proc_state;
++	int proc_prio;
++	int proc_parent_id;
++	struct file* data_file = NULL;
++	char data[1000];
++	int datalen;
++	char filepath[200];
++
++	if(copy_from_user(filepath,file_path,path_length) != 0){
++		return -EFAULT;
++	}
++
++	pid_struct = find_get_pid(pid);
++
++	if(pid_struct==NULL){
++		return -ESRCH;
++	}
++
++	task = pid_task(pid_struct,PIDTYPE_PID);
++
++	//char proc_name[100] = task->comm;
++	proc_id = (int) task->pid;
++	proc_state = (long int) task->state;
++	proc_prio = (int) task->prio;
++	//char proc_parent_name[100] = task->parent->comm;
++	proc_parent_id = (int) task->parent->pid;
++
++	printk(KERN_ALERT "Process Name: %s \n",task->comm);
++	printk(KERN_ALERT "Process ID: %d \n",proc_id);
++	printk(KERN_ALERT "Process State: %ld \n",proc_state);
++	printk(KERN_ALERT "Process Priority: %d \n",proc_prio);
++	printk(KERN_ALERT "Process Parent Name: %s \n",task->parent->comm);
++	printk(KERN_ALERT "Process Parent ID: %d \n",proc_parent_id);
++
++	
++	data_file = filp_open(filepath, O_WRONLY | O_CREAT, 0);
++
++	if(data_file==NULL){
++		return -ENOENT;
++	}
++
++	scnprintf(data,sizeof(data),"Process Name: %s \nProcess ID: %d \nProcess State: %ld \nProcess Priority: %d \nProcess Parent Name: %s \nProcess Parent ID: %d \n",task->comm,proc_id,proc_state,proc_prio,task->parent->comm,proc_parent_id);
++	datalen = (int) strlen(data);
++
++	kernel_write(data_file,data,datalen,&data_file->f_pos);
++
++	filp_close(data_file,NULL);
++
++    return 0;
++}
+\ No newline at end of file
+Binary files linux/linux-5.9.1/tools/objtool/objtool and linux3/linux-5.9.1/tools/objtool/objtool differ

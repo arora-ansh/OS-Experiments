@@ -1,0 +1,39 @@
+Name: Ansh Arora
+Roll No.: 2019022
+
+Problem 1 Explanation
+
+Makefile Commands -
+
+For running the standalone checkGreater assembly file that starts at _start by default and executing the generated executable -
+
+	make A
+
+For compiling the assembly file using NASM, compiling the C file using gcc and then linking the two files using linker with -e flag declaring the entry point as main to create executable a file -
+	
+	make B
+
+For clearing out the generated .o and a.out files (RESET) -
+
+	make clear 
+_______________________________________________________________________________________
+
+DESCRIPTIONS -
+
+Assembly Program -
+The Assembly program has been given a _start, where the values can be assigned to the two registers, x to rdi and y to rsi. The values can be added as constants inside the assembly file before execution. After adding the values, the program goes to the checkGreater funcion where the two valeus stored in registers are compared using cmp. If x is greater than y, then jg is used to jump to the optiona label. Otherwise, the program jumps to the optionb label using jmp. In the optiona, a write syscall is made, where the messagea "1" is passed. Otherwise, in optionb, a write syscall is made where the messageb "0" is passed and displayed on stdout. In both cases, the write syscall is immediately followed by an exit syscall, thus ending the program immediately afterwards.
+
+C Program - 
+The C program holds the prototype for the checkGreater function as it would for calling an externally held assembly function. The values can then be passed from the main function where there is a function call made.
+
+What happens when Assembly Program is ran standalone-
+
+I took x = 9 and y = 11 here(as stored in registers)
+When run standalone, the assembly program has a defined start at _start and is able to begin processing from there going top-down, thus it is able to run successfully as one might expect. Since x<y, the write function prints out 0 on to stdout, thus meaning that this method is working correctly.
+
+What happens when the C program's main is used to call the function-
+
+I took x = 11 and y = 9 here(passed as arguments into registers rdi and rsi)
+Here, after the compilation and creation of -o files, in the last step i.e. linking, I use the -e flag will my ld linking command and define my entrypoint to be main. So, when my program runs, it declares the value x and y into the checkGreater function, bypassing the values that _start declares. Thus, the program again runs correctly, this time with the different declared entry point. Since x>y in this case, the write function prints out a 1 on to stdout.
+
+Therefore, the program CAN HAVE multiple entry points as declared if declared so in the linking stage.

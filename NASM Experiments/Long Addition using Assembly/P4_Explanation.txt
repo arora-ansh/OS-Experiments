@@ -1,0 +1,26 @@
+Name: Ansh Arora
+Roll No: 2019022
+
+Problem 4 Explanation
+
+Explanation - 
+
+We will need two different files for long_add and extended_add if we want to run it in x86(32-bit) orr x86-64(64-bit). This is because for the arguments passed in long_add for 32-bit compilation with nasm -felf32 compilation command, we can only make use of the 32 bit registers. These can't store 64-bit integers. So, in this program, I've made use of the 32 bit registers eax, esi, edi and edx after storing values on it from the stack using the ebp base pointer to point to the different declared parameters. I return the added values in the eax register.
+
+Therefore, to solve the fact that we can't use 64bit integers with my 32bit assembly instruction code, we create another assembly file P4_2.asm which houses the extended_add function and create a function prototype for it in the P4.c file. This makes use of rax, rdi, rsi, rdx and rcx registers and return the value stored in the rax register after adding the 4 user entered values.
+
+__________________________________________________________________________________________
+
+Makefile Commands -
+
+To run 32 bit long_add function, uncomment the 32 bit section(64-bit section commented) in P4.c and run-
+
+	make 32bit
+
+To run 64 bit extended_add function, uncomment the 64 bit section(32-bit section commented) in P4.c and run-
+
+	make 64bit
+
+To reset files, run0
+
+	make clear
